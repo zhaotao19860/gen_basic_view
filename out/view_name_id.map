@@ -1,0 +1,3 @@
+#视图名称            视图ID  上级视图名称(可选)
+view_default         0           
+view_google_search   6       view_search                                  

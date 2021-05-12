@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+SHELL_FOLDER=$(dirname $(readlink -f "$0"))
+SERVICE="gen-basic-view"
+mkdir -p ${SHELL_FOLDER}/../log/
+
+install_crontab(){
+    echo "install crontab ..."
+    crontab -l > ${SHELL_FOLDER}/crontab.bak
+    sed -i -e '/gen-basic-view/d' ${SHELL_FOLDER}/crontab.bak
+    echo "0 0 * * * sh ${SHELL_FOLDER}/all.sh >>  ${SHELL_FOLDER}/../log/all.log 2>&1" >> ${SHELL_FOLDER}/crontab.bak
+    crontab ${SHELL_FOLDER}/crontab.bak
+    echo "$(date) [INFO] install crontab success!"
+    \rm -f ${SHELL_FOLDER}/crontab.bak
+    crontab -l
+    return 0
+}
+
+uninstall_crontab(){
+    echo "$(date) [INFO] uninstall crontab ..."
+    crontab -l > ${SHELL_FOLDER}/crontab.bak
+    sed -i -e '/gen-basic-view/d' ${SHELL_FOLDER}/crontab.bak
+    crontab ${SHELL_FOLDER}/crontab.bak
+    echo "$(date) [INFO] uninstall crontab success!"
+    \rm -f ${SHELL_FOLDER}/crontab.bak
+    crontab -l
+    return 0
+}
+
+start(){
+    install_crontab
+}
+
+stop(){
+    uninstall_crontab
+}
+
+status(){
+    if crontab -l | grep "gen-basic-view"
+    then
+        echo "$(date) [INFO] $SERVICE is running"
+        return 0
+    else
+        echo "$(date) [INFO] $SERVICE isn't running"
+        exit 1
+    fi
+}
+
+restart(){
+    stop
+    start
+}
+
+case "$1:" in
+    start:) start ;;
+    stop:) stop ;;
+    status:) status ;;
+    restart:) restart ;;
+    *) echo $"Usage: $0 {start |stop | status | restart}" ;;
+esac
+
